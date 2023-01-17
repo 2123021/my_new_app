@@ -1,61 +1,39 @@
+#「最適化問題のシミュレータ」アプリを作成するためのサンプルコード
 import streamlit as st
-import cv2
 import numpy as np
-from tensorflow.keras.models import load_model
-from PIL import Image
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
 
-# Load the trained model
-model = load_model('model.h5')
+st.title("Optimization Problem Simulator")
 
-def predict(image):
-    # Pre-process the image for the model
-    image = cv2.resize(image, (48,48))
-    image = image.reshape(1, 48, 48, 1)
-    image = image / 255.0
-    
-    # Make predictions
-    pred = model.predict(image)
-    return pred
+# Define the objective function
+def objective_function(x):
+    return x[0]**2 + x[1]**2
 
-def main():
-    st.title("Facial Expression Recognition")
-    st.set_option('deprecation.showfileUploaderEncoding', False)
-    st.set_option('deprecation.showPyplotGlobalUse', False)
+# Define the constraints
+def constraint1(x):
+    return x[0] + x[1] - 1
 
-    # Open a video stream
-    video_capture = cv2.VideoCapture(0)
-    
-    while True:
-        # Get the current frame from the video stream
-        _, frame = video_capture.read()
-        
-        # Convert the frame to grayscale
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        
-        # Detect faces in the image
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-        
-        # Draw a rectangle around the faces
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            
-            # Crop the face from the image
-            face_cropped = gray[y:y+h, x:x+w]
-            
-            # Predict the facial expression
-            pred = predict(face_cropped)
-            pred = np.argmax(pred)
-            label = emotions[pred]
-            
-            # Display the facial expression on the screen
-            cv2.putText(frame, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-        
-        # Convert the frame to a PIL image
-        frame = Image.fromarray(frame)
-        
-        # Show the frame in the Streamlit app
-        st.image(frame)
-        
-        # Break the loop if the 'q' key is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+def constraint2(x):
+    return 1 - x[0] - x[1]
+
+# Set the optimization bounds
+bounds = [(0, 1), (0, 1)]
+
+# Set the initial guess
+x0 = [0.5, 0.5]
+
+# Run the optimization
+result = minimize(objective_function, x0, bounds=bounds, constraints={"type": "eq", "fun": constraint1},
+                  constraints={"type": "ineq", "fun": constraint2})
+
+# Plot the results
+x = np.linspace(0, 1, 100)
+y = np.linspace(0, 1, 100)
+X, Y = np.meshgrid(x, y)
+Z = X**2 + Y**2
+
+plt.contour(X, Y, Z, levels=np.logspace(0, 2, 20))
+plt.scatter(result.x[0], result.x[1])
+
+st.pyplot()
