@@ -24,7 +24,7 @@ bounds = [(0, 1), (0, 1)]
 x0 = [0.5, 0.5]
 
 # Run the optimization
-result = minimize(objective_function, x0, bounds=bounds, constraints={"type": "eq", "fun": "constraint1"},
+result = minimize(objective_function, x0, bounds=bounds, constraints={"type": "eq", "fun": constraint1},
                   constraints={"type": "ineq", "fun": constraint2})
 
 # Plot the results
